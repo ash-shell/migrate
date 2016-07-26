@@ -1,0 +1,3 @@
+.env
+*.swp
+ash_migrations/*

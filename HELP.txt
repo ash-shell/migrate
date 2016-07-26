@@ -1,0 +1,23 @@
+USAGE:
+
+    migrate
+    migrate:main
+        Executes the set of migrations that have yet to be run.
+
+        Example Usage: `ash migrate`
+
+    migrate:make $migration_name
+        Creates a new migration.
+
+    migrate:sync
+
+    migrate:rollback
+
+    migrate:reset
+
+    migrate:refresh
+
+    migrate:map $increment
+
+    migrate:step
+

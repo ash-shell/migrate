@@ -1,0 +1,5 @@
+name: Migrate
+package: github.com/ash-shell/migrate
+default_alias: migrate
+callable_prefix: Migrate
+test_prefix: Migrate
