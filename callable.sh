@@ -63,7 +63,12 @@ Migrate__callable_make(){
 #################################################
 #################################################
 Migrate__callable_sync(){
-    Logger__log "migrate:sync"
+    Migrate_setup
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+    fi
+
+    Migrate_shutdown
 }
 
 #################################################
