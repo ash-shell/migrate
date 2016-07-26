@@ -62,11 +62,13 @@ Migrate_setup(){
 
             Migrate_is_tracked "$name"
             if [[ $? -eq $Ash__FALSE ]]; then
-                Migrate_create_migration "$name" "$date"
+                local result=""
+                result=$(Migrate_create_migration "$name" "$date")
                 if [[ $? -eq $Ash__TRUE ]]; then
                     Logger__success "Tracking $name"
                 else
-                    Logger__error "Failed to track $name.  Something is wrong!"
+                    Logger__error "Failed to track $name"
+                    Logger__error "$result"
                 fi
             fi
         fi

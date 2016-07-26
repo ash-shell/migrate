@@ -26,13 +26,18 @@ Migrate_is_tracked() {
 #
 # @param $1: The name of the migration
 # @param $2: The timestamp of the migration
+# @return $Ash__TRUE if the migration is created,
+#   $Ash__FALSE otherwise
+# @echo: The SQL error, in the event there is one
 #################################################
 Migrate_create_migration() {
     local sql="$(Migrate_create_migration_query "$1" "$2")"
-    local result="$(Sql__execute "$sql")"
+    local result=""
+    result="$(Sql__execute "$sql")"
     if [[ $? -eq 0 ]]; then
         return $Ash__TRUE
     else
+        echo "$result"
         return $Ash__FALSE
     fi
 }
