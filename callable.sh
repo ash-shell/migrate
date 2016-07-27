@@ -101,7 +101,7 @@ Migrate__callable_sync(){
 
 #################################################
 #################################################
-Migrate__callable_reset(){
+Migrate__callable_rollback(){
     # Setup
     Migrate_setup
     if [[ $? -ne $Ash__TRUE ]]; then
