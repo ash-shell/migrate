@@ -62,7 +62,6 @@ Migrate_run_migration() {
 
     # Get Migration SQL
     migration="${BASH_REMATCH[1]}"
-    migration="$(echo "$migration" | xargs)"
     if [[ "$migration" = "" ]]; then
          echo "Can't run an empty migration"
          return $Ash__FALSE
@@ -83,4 +82,74 @@ Migrate_run_migration() {
         echo "$result"
         return $Ash__FALSE
     fi
+}
+
+#################################################
+# Runs a single revert.
+#
+# @param $1: The id of the migration
+# @param $2: The name of the migration
+# @param $3: The timestamp of the migration
+#################################################
+Migrate_run_revert() {
+    local file="$Migrate_MIGRATIONS_CURRENT_DIRECTORY/$3_$2.sql"
+    local contents=$(cat $file)
+    local revert_regex=".*--\ Migrate:.*--\ Revert:(.*)"
+
+    # Verify our migration file matches regex
+    if [[ ! "$contents" =~ $revert_regex ]]; then
+        echo "Migration file is misformatted"
+        return $Ash__FALSE
+    fi
+
+    # Get Revert SQL
+    revert="${BASH_REMATCH[1]}"
+    if [[ "$revert" = "" ]]; then
+         echo "Can't run an empty revert"
+         return $Ash__FALSE
+    fi
+
+    # Run Revert
+    local result=""
+    result="$(Sql__execute "$revert")"
+    if [[ $? -ne $Ash__TRUE ]]; then
+        echo "$result"
+        return $Ash__FALSE
+    fi
+
+    # Update `active` field for query just ran
+    local sql="$(Migrate_set_active_query "$1" "$Sql__FALSE")"
+    result="$(Sql__execute "$sql")"
+    if [[ $? -ne $Ash__TRUE ]]; then
+        echo "$result"
+        return $Ash__FALSE
+    fi
+}
+
+Migrate_rollback_all() {
+    # Loading all migrations
+    local result=""
+    result="$(Sql__execute "$(Migrate_select_all_migrations_desc_query)")"
+    if [[ $? -eq $Ash__FALSE ]]; then
+        Logger__error "Failed to load migrations"
+        Logger__error "$result"
+        return $Ash__FALSE
+    fi
+
+    # Go through all migrations and run the revert
+    while read -r record; do
+        while IFS=$'\t' read id name active created_at; do
+            if [[ "$active" = $Sql__TRUE ]]; then
+                local result=""
+                result="$(Migrate_run_revert "$id" "$name" "$created_at")"
+                if [[ $? -ne $Ash__TRUE ]]; then
+                    Logger__error "Failed to run revert '$name'"
+                    Logger__error "$result"
+                    return $Ash__FALSE
+                else
+                    Logger__success "Reverted $name"
+                fi
+            fi
+        done <<< "$record"
+    done <<< "$result"
 }

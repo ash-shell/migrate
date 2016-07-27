@@ -29,7 +29,7 @@ Migrate__callable_main(){
 
     # Loading all migrations
     local result=""
-    result="$(Sql__execute "$(Migrate_select_all_migrations_query)")"
+    result="$(Sql__execute "$(Migrate_select_all_migrations_asc_query)")"
     if [[ $? -eq $Ash__FALSE ]]; then
         Logger__error "Failed to load migrations"
         Logger__error "$result"
@@ -101,8 +101,23 @@ Migrate__callable_sync(){
 
 #################################################
 #################################################
-Migrate__callable_reset(){
-    Logger__log "migrate:reset"
+Migrate__callable_rollback(){
+    # Setup
+    Migrate_setup
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+    fi
+
+    # Rollback
+    local result=$Ash__TRUE
+    Migrate_rollback_all
+    if [[ $? -ne $Ash__TRUE ]]; then
+        result=$Ash__FALSE
+    fi
+
+    # Shutdown
+    Migrate_shutdown
+    return "$result"
 }
 
 #################################################
@@ -122,7 +137,7 @@ Migrate__callable_map(){
 
     # Loading all migrations
     local result=""
-    result="$(Sql__execute "$(Migrate_select_all_migrations_query)")"
+    result="$(Sql__execute "$(Migrate_select_all_migrations_asc_query)")"
     if [[ $? -eq $Ash__FALSE ]]; then
         Logger__error "Failed to load migrations"
         Logger__error "$result"
