@@ -29,7 +29,7 @@ Migrate__callable_main(){
 
     # Loading all migrations
     local result=""
-    result="$(Sql__execute "$(Migrate_select_all_migrations_query)")"
+    result="$(Sql__execute "$(Migrate_select_all_migrations_asc_query)")"
     if [[ $? -eq $Ash__FALSE ]]; then
         Logger__error "Failed to load migrations"
         Logger__error "$result"
@@ -102,7 +102,40 @@ Migrate__callable_sync(){
 #################################################
 #################################################
 Migrate__callable_reset(){
-    Logger__log "migrate:reset"
+    # Setup
+    Migrate_setup
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+    fi
+
+    # Loading all migrations
+    local result=""
+    result="$(Sql__execute "$(Migrate_select_all_migrations_desc_query)")"
+    if [[ $? -eq $Ash__FALSE ]]; then
+        Logger__error "Failed to load migrations"
+        Logger__error "$result"
+        return $Ash__FALSE
+    fi
+
+    # Go through all migrations and run the revert
+    while read -r record; do
+        while IFS=$'\t' read id name active created_at; do
+            if [[ "$active" = $Sql__TRUE ]]; then
+                local result=""
+                result="$(Migrate_run_revert "$id" "$name" "$created_at")"
+                if [[ $? -ne $Ash__TRUE ]]; then
+                    Logger__error "Failed to run revert '$name'"
+                    Logger__error "$result"
+                    return $Ash__FALSE
+                else
+                    Logger__success "Reverted $name"
+                fi
+            fi
+        done <<< "$record"
+    done <<< "$result"
+
+    # Shutdown
+    Migrate_shutdown
 }
 
 #################################################
@@ -122,7 +155,7 @@ Migrate__callable_map(){
 
     # Loading all migrations
     local result=""
-    result="$(Sql__execute "$(Migrate_select_all_migrations_query)")"
+    result="$(Sql__execute "$(Migrate_select_all_migrations_asc_query)")"
     if [[ $? -eq $Ash__FALSE ]]; then
         Logger__error "Failed to load migrations"
         Logger__error "$result"

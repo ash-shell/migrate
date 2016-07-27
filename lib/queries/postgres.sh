@@ -47,11 +47,25 @@ ____EOF
 # Echoes the query for getting all migrations
 # that are currently in the database.
 #################################################
-Migrate_select_all_migrations_query(){
+Migrate_select_all_migrations_asc_query(){
     read -d '' sql <<____EOF
     SELECT *
     FROM $MIGRATE_MIGRATIONS_TABLE
     ORDER BY created_at;
+____EOF
+    echo "$sql"
+}
+
+#################################################
+# Echoes the query for getting all migrations
+# that are currently in the database, in
+# descending order.
+#################################################
+Migrate_select_all_migrations_desc_query(){
+    read -d '' sql <<____EOF
+    SELECT *
+    FROM $MIGRATE_MIGRATIONS_TABLE
+    ORDER BY created_at DESC;
 ____EOF
     echo "$sql"
 }
