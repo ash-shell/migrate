@@ -1,5 +1,5 @@
 #################################################
-# Returns the query for creating the migrations
+# Echoes the query for creating the migrations
 # table
 #################################################
 Migrate_create_migrations_table_query(){
@@ -16,7 +16,7 @@ ____EOF
 }
 
 #################################################
-# Returns the query for creating a new migration
+# Echoes the query for creating a new migration
 #
 # @param $1: The name of the migration
 # @param $2: The timestamp of the migration
@@ -30,7 +30,7 @@ ____EOF
 }
 
 #################################################
-# Returns the query for counting the number of
+# Echoes the query for counting the number of
 # migrations that match the name
 #
 # @param $1: The migration name
@@ -40,6 +40,19 @@ Migrate_count_migrations_by_name_query(){
     SELECT COUNT(id)
     FROM $MIGRATE_MIGRATIONS_TABLE
     WHERE name='$1';
+____EOF
+    echo "$sql"
+}
+
+#################################################
+# Echoes the query for getting all migrations
+# that are currently in the database.
+#################################################
+Migrate_select_all_migrations(){
+    read -d '' sql <<____EOF
+    SELECT *
+    FROM $MIGRATE_MIGRATIONS_TABLE
+    ORDER BY created_at;
 ____EOF
     echo "$sql"
 }

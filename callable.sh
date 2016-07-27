@@ -92,7 +92,36 @@ Migrate__callable_refresh(){
 #################################################
 #################################################
 Migrate__callable_map(){
-    Logger__log "migrate:map"
+    # Setup
+    Migrate_setup
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+    fi
+
+    # Loading all migrations
+    local result=""
+    result="$(Sql__execute "$(Migrate_select_all_migrations)")"
+    if [[ $? -eq $Ash__FALSE ]]; then
+        Logger__error "Failed to load migrations"
+        Logger__error "$result"
+        return $Ash__FALSE
+    fi
+
+    # Go through all migrations and log them
+    Logger__disable_prefix
+    while read -r record; do
+        while IFS=$'\t' read id name ran_last active created_at; do
+            if [[ "$active" = $Sql__TRUE ]]; then
+                Logger__success " > $name"
+            else
+                Logger__log "   $name"
+            fi
+        done <<< "$record"
+    done <<< "$result"
+    Logger__enable_prefix
+
+    # Shutdown
+    Migrate_shutdown
 }
 
 #################################################
