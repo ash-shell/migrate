@@ -126,6 +126,10 @@ Migrate_run_revert() {
     fi
 }
 
+
+#################################################
+# Rolls back all migrations.
+#################################################
 Migrate_rollback_all() {
     # Loading all migrations
     local result=""
@@ -148,6 +152,37 @@ Migrate_rollback_all() {
                     return $Ash__FALSE
                 else
                     Logger__success "Reverted $name"
+                fi
+            fi
+        done <<< "$record"
+    done <<< "$result"
+}
+
+#################################################
+# Migrates all migrations.
+#################################################
+Migrate_migrate_all() {
+    # Loading all migrations
+    local result=""
+    result="$(Sql__execute "$(Migrate_select_all_migrations_asc_query)")"
+    if [[ $? -eq $Ash__FALSE ]]; then
+        Logger__error "Failed to load migrations"
+        Logger__error "$result"
+        return $Ash__FALSE
+    fi
+
+    # Go through all migrations and run them
+    while read -r record; do
+        while IFS=$'\t' read id name active created_at; do
+            if [[ "$active" = $Sql__FALSE ]]; then
+                local result=""
+                result="$(Migrate_run_migration "$id" "$name" "$created_at")"
+                if [[ $? -ne $Ash__TRUE ]]; then
+                    Logger__error "Failed to run migration '$name'"
+                    Logger__error "$result"
+                    return $Ash__FALSE
+                else
+                    Logger__success "Migrated $name"
                 fi
             fi
         done <<< "$record"

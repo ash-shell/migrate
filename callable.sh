@@ -27,34 +27,16 @@ Migrate__callable_main(){
         return $Ash__FALSE
     fi
 
-    # Loading all migrations
-    local result=""
-    result="$(Sql__execute "$(Migrate_select_all_migrations_asc_query)")"
-    if [[ $? -eq $Ash__FALSE ]]; then
-        Logger__error "Failed to load migrations"
-        Logger__error "$result"
-        return $Ash__FALSE
+    # Migrate
+    local result=$Ash__TRUE
+    Migrate_migrate_all
+    if [[ $? -ne $Ash__TRUE ]]; then
+        result=$Ash__FALSE
     fi
-
-    # Go through all migrations and run them
-    while read -r record; do
-        while IFS=$'\t' read id name active created_at; do
-            if [[ "$active" = $Sql__FALSE ]]; then
-                local result=""
-                result="$(Migrate_run_migration "$id" "$name" "$created_at")"
-                if [[ $? -ne $Ash__TRUE ]]; then
-                    Logger__error "Failed to run migration '$name'"
-                    Logger__error "$result"
-                    return $Ash__FALSE
-                else
-                    Logger__success "Migrated $name"
-                fi
-            fi
-        done <<< "$record"
-    done <<< "$result"
 
     # Shutdown
     Migrate_shutdown
+    return "$result"
 }
 
 #################################################
@@ -123,7 +105,30 @@ Migrate__callable_rollback(){
 #################################################
 #################################################
 Migrate__callable_refresh(){
-    Logger__log "migrate:refresh"
+    # Setup
+    Migrate_setup
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+    fi
+
+    # Rollback
+    Migrate_rollback_all
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+        Migrate_shutdown
+    fi
+
+    Logger__warning "------------------------"
+
+    # Migrate
+    Migrate_migrate_all
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+        Migrate_shutdown
+    fi
+
+    # Shutdown
+    Migrate_shutdown
 }
 
 #################################################
