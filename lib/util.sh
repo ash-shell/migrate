@@ -41,3 +41,46 @@ Migrate_create_migration() {
         return $Ash__FALSE
     fi
 }
+
+#################################################
+# Runs a single migration.
+#
+# @param $1: The id of the migration
+# @param $2: The name of the migration
+# @param $3: The timestamp of the migration
+#################################################
+Migrate_run_migration() {
+    local file="$Migrate_MIGRATIONS_CURRENT_DIRECTORY/$3_$2.sql"
+    local contents=$(cat $file)
+    local migrate_regex=".*--\ Migrate:(.*)--\ Revert:.*"
+
+    # Verify our migration file matches regex
+    if [[ ! "$contents" =~ $migrate_regex ]]; then
+        echo "Migration file is misformatted"
+        return $Ash__FALSE
+    fi
+
+    # Get Migration SQL
+    migration="${BASH_REMATCH[1]}"
+    migration="$(echo "$migration" | xargs)"
+    if [[ "$migration" = "" ]]; then
+         echo "Can't run an empty migration"
+         return $Ash__FALSE
+    fi
+
+    # Run Migration
+    local result=""
+    result="$(Sql__execute "$migration")"
+    if [[ $? -ne $Ash__TRUE ]]; then
+        echo "$result"
+        return $Ash__FALSE
+    fi
+
+    # Update `active` field for query just ran
+    local sql="$(Migrate_set_active_query "$1" "$Sql__TRUE")"
+    result="$(Sql__execute "$sql")"
+    if [[ $? -ne $Ash__TRUE ]]; then
+        echo "$result"
+        return $Ash__FALSE
+    fi
+}
