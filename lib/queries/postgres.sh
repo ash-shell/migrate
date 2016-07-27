@@ -7,7 +7,6 @@ Migrate_create_migrations_table_query(){
     CREATE TABLE $MIGRATE_MIGRATIONS_TABLE (
         id          serial      PRIMARY KEY,
         name        text        NOT NULL UNIQUE,
-        ran_last    boolean     NOT NULL DEFAULT false,
         active      boolean     NOT NULL DEFAULT false,
         created_at  bigint      NOT NULL UNIQUE
     );
@@ -24,7 +23,7 @@ ____EOF
 Migrate_create_migration_query(){
     read -d '' sql <<____EOF
     INSERT INTO $MIGRATE_MIGRATIONS_TABLE
-    VALUES(DEFAULT, '$1', FALSE, FALSE, $2);
+    VALUES(DEFAULT, '$1', FALSE, $2);
 ____EOF
     echo "$sql"
 }

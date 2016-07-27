@@ -11,8 +11,6 @@ USAGE:
 
     migrate:sync
 
-    migrate:rollback
-
     migrate:reset
 
     migrate:refresh

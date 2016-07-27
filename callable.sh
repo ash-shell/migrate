@@ -38,7 +38,7 @@ Migrate__callable_main(){
 
     # Go through all migrations and run them
     while read -r record; do
-        while IFS=$'\t' read id name ran_last active created_at; do
+        while IFS=$'\t' read id name active created_at; do
             if [[ "$active" = $Sql__FALSE ]]; then
                 local result=""
                 result="$(Migrate_run_migration "$id" "$name" "$created_at")"
@@ -101,12 +101,6 @@ Migrate__callable_sync(){
 
 #################################################
 #################################################
-Migrate__callable_rollback(){
-    Logger__log "migrate:rollback"
-}
-
-#################################################
-#################################################
 Migrate__callable_reset(){
     Logger__log "migrate:reset"
 }
@@ -138,7 +132,7 @@ Migrate__callable_map(){
     # Go through all migrations and log them
     Logger__disable_prefix
     while read -r record; do
-        while IFS=$'\t' read id name ran_last active created_at; do
+        while IFS=$'\t' read id name active created_at; do
             if [[ "$active" = $Sql__TRUE ]]; then
                 Logger__success " > $name"
             else
