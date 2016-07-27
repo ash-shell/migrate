@@ -27,7 +27,7 @@ Migrate__callable_main(){
         return $Ash__FALSE
     fi
 
-    # Rollback
+    # Migrate
     local result=$Ash__TRUE
     Migrate_migrate_all
     if [[ $? -ne $Ash__TRUE ]]; then
@@ -105,7 +105,30 @@ Migrate__callable_rollback(){
 #################################################
 #################################################
 Migrate__callable_refresh(){
-    Logger__log "migrate:refresh"
+    # Setup
+    Migrate_setup
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+    fi
+
+    # Rollback
+    Migrate_rollback_all
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+        Migrate_shutdown
+    fi
+
+    Logger__warning "------------------------"
+
+    # Migrate
+    Migrate_migrate_all
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+        Migrate_shutdown
+    fi
+
+    # Shutdown
+    Migrate_shutdown
 }
 
 #################################################
