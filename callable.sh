@@ -21,11 +21,39 @@ Migrate__callable_help(){
 #################################################
 #################################################
 Migrate__callable_main(){
+    # Setup
     Migrate_setup
     if [[ $? -ne $Ash__TRUE ]]; then
         return $Ash__FALSE
     fi
 
+    # Loading all migrations
+    local result=""
+    result="$(Sql__execute "$(Migrate_select_all_migrations_query)")"
+    if [[ $? -eq $Ash__FALSE ]]; then
+        Logger__error "Failed to load migrations"
+        Logger__error "$result"
+        return $Ash__FALSE
+    fi
+
+    # Go through all migrations and run them
+    while read -r record; do
+        while IFS=$'\t' read id name ran_last active created_at; do
+            if [[ "$active" = $Sql__FALSE ]]; then
+                local result=""
+                result="$(Migrate_run_migration "$id" "$name" "$created_at")"
+                if [[ $? -ne $Ash__TRUE ]]; then
+                    Logger__error "Failed to run migration '$name'"
+                    Logger__error "$result"
+                    return $Ash__FALSE
+                else
+                    Logger__success "Migrated $name"
+                fi
+            fi
+        done <<< "$record"
+    done <<< "$result"
+
+    # Shutdown
     Migrate_shutdown
 }
 
@@ -100,7 +128,7 @@ Migrate__callable_map(){
 
     # Loading all migrations
     local result=""
-    result="$(Sql__execute "$(Migrate_select_all_migrations)")"
+    result="$(Sql__execute "$(Migrate_select_all_migrations_query)")"
     if [[ $? -eq $Ash__FALSE ]]; then
         Logger__error "Failed to load migrations"
         Logger__error "$result"
@@ -115,8 +143,7 @@ Migrate__callable_map(){
                 Logger__success " > $name"
             else
                 Logger__log "   $name"
-            fi
-        done <<< "$record"
+            fi done <<< "$record"
     done <<< "$result"
     Logger__enable_prefix
 

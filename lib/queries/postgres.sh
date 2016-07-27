@@ -48,11 +48,27 @@ ____EOF
 # Echoes the query for getting all migrations
 # that are currently in the database.
 #################################################
-Migrate_select_all_migrations(){
+Migrate_select_all_migrations_query(){
     read -d '' sql <<____EOF
     SELECT *
     FROM $MIGRATE_MIGRATIONS_TABLE
     ORDER BY created_at;
+____EOF
+    echo "$sql"
+}
+
+#################################################
+# Echoes the query for updating a migrations
+# active field
+#
+# @param $1: The id of the migration
+# @param $2: The new value of the active field
+#################################################
+Migrate_set_active_query(){
+    read -d '' sql <<____EOF
+    UPDATE $MIGRATE_MIGRATIONS_TABLE
+    SET active='$2'
+    WHERE id=$1;
 ____EOF
     echo "$sql"
 }
