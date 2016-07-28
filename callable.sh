@@ -32,15 +32,14 @@ Migrate__callable_main(){
     fi
 
     # Migrate
-    local result=$Ash__TRUE
     Migrate_migrate_all
     if [[ $? -ne $Ash__TRUE ]]; then
-        result=$Ash__FALSE
+        Migrate_shutdown
+        return $Ash__FALSE
     fi
 
     # Shutdown
     Migrate_shutdown
-    return "$result"
 }
 
 #################################################
@@ -67,6 +66,7 @@ Migrate__callable_make(){
     else
         Logger__error "Failed to create migration."
         Logger__error "$result"
+        Migrate_shutdown
         return $Ash__FALSE
     fi
 
@@ -95,15 +95,14 @@ Migrate__callable_rollback(){
     fi
 
     # Rollback
-    local result=$Ash__TRUE
     Migrate_rollback_all
     if [[ $? -ne $Ash__TRUE ]]; then
-        result=$Ash__FALSE
+        Migrate_shutdown
+        return $Ash__FALSE
     fi
 
     # Shutdown
     Migrate_shutdown
-    return "$result"
 }
 
 #################################################
@@ -150,6 +149,7 @@ Migrate__callable_map(){
     if [[ $? -eq $Ash__FALSE ]]; then
         Logger__error "Failed to load migrations"
         Logger__error "$result"
+        Migrate_shutdown
         return $Ash__FALSE
     fi
 
