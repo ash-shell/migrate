@@ -172,5 +172,46 @@ Migrate__callable_map(){
 #################################################
 #################################################
 Migrate__callable_step(){
-    Logger__log "migrate:step"
+    # Setup
+    Migrate_setup
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+    fi
+
+    # Check if we have a step param
+    if [[ -z "$1" ]]; then
+        Logger__error "Step requires a parameter"
+        Migrate_shutdown
+        return $Ash__FALSE
+    fi
+
+    # Verify proper format
+    if [[ ! "$1" =~ [+-][[:digit:]]+$ ]]; then
+        Logger__error "Invalid parameter.  Step parameter must be in this format: [+-][[:digit:]]+$"
+        Migrate_shutdown
+        return $Ash__FALSE
+    fi
+
+    # Split Action + Number
+    local action=${1:0:1}
+    local number=${1:1:${#1}-1}
+
+    # Handle migrate
+    if [[ "$action" = "+" ]]; then
+        Migrate_migrate_all "$number"
+        if [[ $? -ne $Ash__TRUE ]]; then
+            Migrate_shutdown
+            return $Ash__FALSE
+        fi
+    # Handle revert
+    elif [[ "$action" = "-" ]]; then
+        Migrate_rollback_all "$number"
+        if [[ $? -ne $Ash__TRUE ]]; then
+            Migrate_shutdown
+            return $Ash__FALSE
+        fi
+    fi
+
+    # Shutdown
+    Migrate_shutdown
 }
