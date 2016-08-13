@@ -128,12 +128,13 @@ Migrate_run_revert() {
 
 
 #################################################
-# Rolls back all migrations.
+# Rolls back migrations.
 #
 # @param $1: The maximum number of migrations to
-#   roll back
+#   roll back.  If $1 is not specified, all
+#   migrations are rolled back.
 #################################################
-Migrate_rollback_all() {
+Migrate_rollback() {
     # Get maximum number of rollbacks
     local max_rollbacks="-1"
     if [[ -n $1 ]]; then
@@ -180,7 +181,7 @@ Migrate_rollback_all() {
 # @param $1: The maximum number of migrations to
 #   migrate
 #################################################
-Migrate_migrate_all() {
+Migrate_migrate() {
     # Get maximum number of migrations
     local max_migrations="-1"
     if [[ -n $1 ]]; then

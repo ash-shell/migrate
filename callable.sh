@@ -17,12 +17,15 @@ Migrate_MIGRATIONS_CURRENT_DIRECTORY="$Ash__CALL_DIRECTORY/$MIGRATE_MIGRATIONS_D
 Migrate_MIGRATION_TEMPLATE="$Migrate_PACKAGE_LOCATION/extra/migration_template.sql"
 
 #################################################
+# Runs more on the contents of the HELP.txt file
+# which provides usage information for this module.
 #################################################
 Migrate__callable_help(){
     more "$Ash__ACTIVE_MODULE_DIRECTORY/HELP.txt"
 }
 
 #################################################
+# Runs all outstanding migrations.
 #################################################
 Migrate__callable_main(){
     # Setup
@@ -32,7 +35,7 @@ Migrate__callable_main(){
     fi
 
     # Migrate
-    Migrate_migrate_all
+    Migrate_migrate
     if [[ $? -ne $Ash__TRUE ]]; then
         Migrate_shutdown
         return $Ash__FALSE
@@ -43,6 +46,10 @@ Migrate__callable_main(){
 }
 
 #################################################
+# Creates a new migration, which creates a new
+# file in the "$Migrate_MIGRATIONS_CURRENT_DIRECTORY"
+# directory for the user to fill out with their
+# migration.
 #################################################
 Migrate__callable_make(){
     # Setup
@@ -75,17 +82,8 @@ Migrate__callable_make(){
 }
 
 #################################################
-#################################################
-Migrate__callable_sync(){
-    Migrate_setup
-    if [[ $? -ne $Ash__TRUE ]]; then
-        return $Ash__FALSE
-    fi
-
-    Migrate_shutdown
-}
-
-#################################################
+# Rolls back all of the migrations that have been
+# run in the database.
 #################################################
 Migrate__callable_rollback(){
     # Setup
@@ -95,7 +93,7 @@ Migrate__callable_rollback(){
     fi
 
     # Rollback
-    Migrate_rollback_all
+    Migrate_rollback
     if [[ $? -ne $Ash__TRUE ]]; then
         Migrate_shutdown
         return $Ash__FALSE
@@ -106,6 +104,13 @@ Migrate__callable_rollback(){
 }
 
 #################################################
+# Rolls back all of the migrations that have been
+# run in the database, then runs all of the
+# migrations in the database.
+#
+# The same end result would occur if you run this
+# command vs running `rollback` followed by a
+# `migrate`.
 #################################################
 Migrate__callable_refresh(){
     # Setup
@@ -115,7 +120,7 @@ Migrate__callable_refresh(){
     fi
 
     # Rollback
-    Migrate_rollback_all
+    Migrate_rollback
     if [[ $? -ne $Ash__TRUE ]]; then
         return $Ash__FALSE
         Migrate_shutdown
@@ -124,7 +129,7 @@ Migrate__callable_refresh(){
     Logger__warning "------------------------"
 
     # Migrate
-    Migrate_migrate_all
+    Migrate_migrate
     if [[ $? -ne $Ash__TRUE ]]; then
         return $Ash__FALSE
         Migrate_shutdown
@@ -135,6 +140,7 @@ Migrate__callable_refresh(){
 }
 
 #################################################
+# Displays the current state of the migrations.
 #################################################
 Migrate__callable_map(){
     # Setup
@@ -170,6 +176,16 @@ Migrate__callable_map(){
 }
 
 #################################################
+# Allows the user to step through their migrations.
+#
+# @param $1: This defines the number and direction
+#   of steps.
+#
+#   To migrate, this parameter should be +X, where
+#   X is the number of migrations to run.
+#
+#   To revert, this parameter should be -Y, where
+#   Y is the number of migrations to revert.
 #################################################
 Migrate__callable_step(){
     # Setup
@@ -198,14 +214,14 @@ Migrate__callable_step(){
 
     # Handle migrate
     if [[ "$action" = "+" ]]; then
-        Migrate_migrate_all "$number"
+        Migrate_migrate "$number"
         if [[ $? -ne $Ash__TRUE ]]; then
             Migrate_shutdown
             return $Ash__FALSE
         fi
     # Handle revert
     elif [[ "$action" = "-" ]]; then
-        Migrate_rollback_all "$number"
+        Migrate_rollback "$number"
         if [[ $? -ne $Ash__TRUE ]]; then
             Migrate_shutdown
             return $Ash__FALSE

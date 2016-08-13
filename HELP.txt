@@ -9,8 +9,6 @@ USAGE:
     migrate:make $migration_name
         Creates a new migration.
 
-    migrate:sync
-
     migrate:rollback
 
     migrate:refresh
