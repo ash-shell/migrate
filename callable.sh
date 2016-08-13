@@ -2,14 +2,16 @@
 
 Ash__import "github.com/ash-shell/sql"
 
-# Configurable
+# Set defaults if none set
 if [[ "$MIGRATE_MIGRATIONS_TABLE" = "" ]]; then
     MIGRATE_MIGRATIONS_TABLE="ash_migrations"
 fi
 if [[ "$MIGRATE_MIGRATIONS_DIRECTORY" = "" ]]; then
     MIGRATE_MIGRATIONS_DIRECTORY="ash_migrations"
 fi
-MIGRATE_DATABASE_DRIVER="$Sql__DRIVER_POSTGRES"
+if [[ "$MIGRATE_DATABASE_DRIVER" = "" ]]; then
+    MIGRATE_DATABASE_DRIVER="$Sql__DRIVER_POSTGRES"
+fi
 
 # Global Const
 Migrate_PACKAGE_LOCATION="$(Ash__find_module_directory "github.com/ash-shell/migrate")"
