@@ -3,8 +3,12 @@
 Ash__import "github.com/ash-shell/sql"
 
 # Configurable
-MIGRATE_MIGRATIONS_TABLE="ash_migrations"
-MIGRATE_MIGRATIONS_DIRECTORY="ash_migrations"
+if [[ "$MIGRATE_MIGRATIONS_TABLE" = "" ]]; then
+    MIGRATE_MIGRATIONS_TABLE="ash_migrations"
+fi
+if [[ "$MIGRATE_MIGRATIONS_DIRECTORY" = "" ]]; then
+    MIGRATE_MIGRATIONS_DIRECTORY="ash_migrations"
+fi
 MIGRATE_DATABASE_DRIVER="$Sql__DRIVER_POSTGRES"
 
 # Global Const
