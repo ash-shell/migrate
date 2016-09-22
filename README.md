@@ -44,7 +44,7 @@ Before jumping into using this library, you're going to have to set some environ
 
 I would recommend creating a .env file and sourcing it to the terminal that you'll be running your migrations from.
 
-#### Database Driver
+### Database Driver
 
 To start off, you're going to need to specify the database driver:
 
@@ -52,7 +52,7 @@ To start off, you're going to need to specify the database driver:
 export MIGRATE_DATABASE_DRIVER='mysql|postgres'
 ```
 
-#### Database Specific
+### Database Specific
 
 You'll need to then set the environment variables for the specific database driver you've picked that the SQL module expects.
 
