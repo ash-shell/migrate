@@ -54,7 +54,7 @@ export MIGRATE_DATABASE_DRIVER='mysql|postgres'
 
 ### Database Specific
 
-You'll need to then set the environment variables for the specific database driver you've picked that the SQL module expects.
+You'll need to then set the environment variables for the specific database driver you've picked that the [SQL](https://github.com/ash-shell/sql) module expects.
 
 To avoid repeating myself check out [SQLs environment variable section](https://github.com/ash-shell/sql#environment-variables) to see what you'll need to set.
 
