@@ -59,3 +59,91 @@ You'll need to then set the environment variables for the specific database driv
 To avoid repeating myself check out [SQLs environment variable section](https://github.com/ash-shell/sql#environment-variables) to see what you'll need to set.
 
 ## Usage
+
+To get started running migrations for a project you'll need to create a folder named `ash_migrations` in it.
+
+All of the following commands should be called in the directory that holds this folder.
+
+> You can override what this folder is named by setting `MIGRATE_MIGRATIONS_DIRECTORY` in your environment variables.
+
+### Creating Migrations
+
+To create a new migration, run the following command:
+
+```sh
+ash migrate:make $migration_name
+```
+
+Where `$migration_name` is a name that describes your migration.
+
+### Running All Outstanding Migrations
+
+To run all outstanding migrations, run the following command:
+
+```
+ash migrate
+```
+
+### Check Status of Migrations
+
+To check the status of migrations, run the following command:
+
+```
+ash migrate:map
+```
+
+This will output something that looks like this:
+
+```
+> create_people_table
+> create_animals_table
+> create_dogs_table
+  create_foo_table
+  create_baz_table
+```
+
+Migrations with `>` in front of them have been run.
+
+### Rollback All Migrations
+
+To roll back all migrations, run the following command:
+
+```
+ash migrate:rollback
+```
+
+### Refresh All Migrations
+
+Sometimes you need to roll back all of your migrations and then run them again.  This library has a single command to accomplish this:
+
+```
+ash migrate:refresh
+```
+
+### Step Through Migrations
+
+There's a case where you wouldn't want to run all of you migrations, or revert all of your migrations at once.
+
+The step command offers the ability to go through as many migrations/reverts as you want.
+
+The command is formated like this:
+
+```sh
+ash migrate:step [+-][[:digit:]]+
+```
+
+For example, to run the next two migrations you would run:
+
+```sh
+ash migrate:step +2
+```
+
+For example, to revert the last three migrations you would run:
+
+```
+ash migrate:step -3
+```
+
+## License
+
+[MIT](./LICENSE.md)
