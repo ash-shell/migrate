@@ -144,6 +144,14 @@ For example, to revert the last three migrations you would run:
 ash migrate:step -3
 ```
 
+### Forgot Usage?
+
+There's a help command that can remind you:
+
+```
+ash migrate:help
+```
+
 ## License
 
 [MIT](./LICENSE.md)
