@@ -2,14 +2,16 @@
 
 Ash__import "github.com/ash-shell/sql"
 
-# Configurable
+# Set defaults if none set
 if [[ "$MIGRATE_MIGRATIONS_TABLE" = "" ]]; then
     MIGRATE_MIGRATIONS_TABLE="ash_migrations"
 fi
 if [[ "$MIGRATE_MIGRATIONS_DIRECTORY" = "" ]]; then
     MIGRATE_MIGRATIONS_DIRECTORY="ash_migrations"
 fi
-MIGRATE_DATABASE_DRIVER="$Sql__DRIVER_POSTGRES"
+if [[ "$MIGRATE_DATABASE_DRIVER" = "" ]]; then
+    MIGRATE_DATABASE_DRIVER="$Sql__DRIVER_POSTGRES"
+fi
 
 # Global Const
 Migrate_PACKAGE_LOCATION="$(Ash__find_module_directory "github.com/ash-shell/migrate")"
@@ -17,12 +19,15 @@ Migrate_MIGRATIONS_CURRENT_DIRECTORY="$Ash__CALL_DIRECTORY/$MIGRATE_MIGRATIONS_D
 Migrate_MIGRATION_TEMPLATE="$Migrate_PACKAGE_LOCATION/extra/migration_template.sql"
 
 #################################################
+# Runs more on the contents of the HELP.txt file
+# which provides usage information for this module.
 #################################################
 Migrate__callable_help(){
     more "$Ash__ACTIVE_MODULE_DIRECTORY/HELP.txt"
 }
 
 #################################################
+# Runs all outstanding migrations.
 #################################################
 Migrate__callable_main(){
     # Setup
@@ -32,18 +37,21 @@ Migrate__callable_main(){
     fi
 
     # Migrate
-    local result=$Ash__TRUE
-    Migrate_migrate_all
+    Migrate_migrate
     if [[ $? -ne $Ash__TRUE ]]; then
-        result=$Ash__FALSE
+        Migrate_shutdown
+        return $Ash__FALSE
     fi
 
     # Shutdown
     Migrate_shutdown
-    return "$result"
 }
 
 #################################################
+# Creates a new migration, which creates a new
+# file in the "$Migrate_MIGRATIONS_CURRENT_DIRECTORY"
+# directory for the user to fill out with their
+# migration.
 #################################################
 Migrate__callable_make(){
     # Setup
@@ -67,6 +75,7 @@ Migrate__callable_make(){
     else
         Logger__error "Failed to create migration."
         Logger__error "$result"
+        Migrate_shutdown
         return $Ash__FALSE
     fi
 
@@ -75,17 +84,8 @@ Migrate__callable_make(){
 }
 
 #################################################
-#################################################
-Migrate__callable_sync(){
-    Migrate_setup
-    if [[ $? -ne $Ash__TRUE ]]; then
-        return $Ash__FALSE
-    fi
-
-    Migrate_shutdown
-}
-
-#################################################
+# Rolls back all of the migrations that have been
+# run in the database.
 #################################################
 Migrate__callable_rollback(){
     # Setup
@@ -95,18 +95,24 @@ Migrate__callable_rollback(){
     fi
 
     # Rollback
-    local result=$Ash__TRUE
-    Migrate_rollback_all
+    Migrate_rollback
     if [[ $? -ne $Ash__TRUE ]]; then
-        result=$Ash__FALSE
+        Migrate_shutdown
+        return $Ash__FALSE
     fi
 
     # Shutdown
     Migrate_shutdown
-    return "$result"
 }
 
 #################################################
+# Rolls back all of the migrations that have been
+# run in the database, then runs all of the
+# migrations in the database.
+#
+# The same end result would occur if you run this
+# command vs running `rollback` followed by a
+# `migrate`.
 #################################################
 Migrate__callable_refresh(){
     # Setup
@@ -116,7 +122,7 @@ Migrate__callable_refresh(){
     fi
 
     # Rollback
-    Migrate_rollback_all
+    Migrate_rollback
     if [[ $? -ne $Ash__TRUE ]]; then
         return $Ash__FALSE
         Migrate_shutdown
@@ -125,7 +131,7 @@ Migrate__callable_refresh(){
     Logger__warning "------------------------"
 
     # Migrate
-    Migrate_migrate_all
+    Migrate_migrate
     if [[ $? -ne $Ash__TRUE ]]; then
         return $Ash__FALSE
         Migrate_shutdown
@@ -136,6 +142,7 @@ Migrate__callable_refresh(){
 }
 
 #################################################
+# Displays the current state of the migrations.
 #################################################
 Migrate__callable_map(){
     # Setup
@@ -150,6 +157,7 @@ Migrate__callable_map(){
     if [[ $? -eq $Ash__FALSE ]]; then
         Logger__error "Failed to load migrations"
         Logger__error "$result"
+        Migrate_shutdown
         return $Ash__FALSE
     fi
 
@@ -170,7 +178,58 @@ Migrate__callable_map(){
 }
 
 #################################################
+# Allows the user to step through their migrations.
+#
+# @param $1: This defines the number and direction
+#   of steps.
+#
+#   To migrate, this parameter should be +X, where
+#   X is the number of migrations to run.
+#
+#   To revert, this parameter should be -Y, where
+#   Y is the number of migrations to revert.
 #################################################
 Migrate__callable_step(){
-    Logger__log "migrate:step"
+    # Setup
+    Migrate_setup
+    if [[ $? -ne $Ash__TRUE ]]; then
+        return $Ash__FALSE
+    fi
+
+    # Check if we have a step param
+    if [[ -z "$1" ]]; then
+        Logger__error "Step requires a parameter"
+        Migrate_shutdown
+        return $Ash__FALSE
+    fi
+
+    # Verify proper format
+    if [[ ! "$1" =~ [+-][[:digit:]]+$ ]]; then
+        Logger__error "Invalid parameter.  Step parameter must be in this format: [+-][[:digit:]]+$"
+        Migrate_shutdown
+        return $Ash__FALSE
+    fi
+
+    # Split Action + Number
+    local action=${1:0:1}
+    local number=${1:1:${#1}-1}
+
+    # Handle migrate
+    if [[ "$action" = "+" ]]; then
+        Migrate_migrate "$number"
+        if [[ $? -ne $Ash__TRUE ]]; then
+            Migrate_shutdown
+            return $Ash__FALSE
+        fi
+    # Handle revert
+    elif [[ "$action" = "-" ]]; then
+        Migrate_rollback "$number"
+        if [[ $? -ne $Ash__TRUE ]]; then
+            Migrate_shutdown
+            return $Ash__FALSE
+        fi
+    fi
+
+    # Shutdown
+    Migrate_shutdown
 }

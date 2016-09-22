@@ -128,9 +128,19 @@ Migrate_run_revert() {
 
 
 #################################################
-# Rolls back all migrations.
+# Rolls back migrations.
+#
+# @param $1: The maximum number of migrations to
+#   roll back.  If $1 is not specified, all
+#   migrations are rolled back.
 #################################################
-Migrate_rollback_all() {
+Migrate_rollback() {
+    # Get maximum number of rollbacks
+    local max_rollbacks="-1"
+    if [[ -n $1 ]]; then
+        max_rollbacks="$1"
+    fi
+
     # Loading all migrations
     local result=""
     result="$(Sql__execute "$(Migrate_select_all_migrations_desc_query)")"
@@ -141,8 +151,14 @@ Migrate_rollback_all() {
     fi
 
     # Go through all migrations and run the revert
+    local count=0
     while read -r record; do
         while IFS=$'\t' read id name active created_at; do
+            # If we have run all our count will allow, exit
+            if [[ "$max_rollbacks" -ne "-1" ]] && [[ "$count" -ge "$max_rollbacks" ]]; then
+                return $Ash__TRUE
+            fi
+            # Rollback
             if [[ "$active" = $Sql__TRUE ]]; then
                 local result=""
                 result="$(Migrate_run_revert "$id" "$name" "$created_at")"
@@ -151,6 +167,7 @@ Migrate_rollback_all() {
                     Logger__error "$result"
                     return $Ash__FALSE
                 else
+                    count=$((count+1))
                     Logger__success "Reverted $name"
                 fi
             fi
@@ -160,8 +177,17 @@ Migrate_rollback_all() {
 
 #################################################
 # Migrates all migrations.
+#
+# @param $1: The maximum number of migrations to
+#   migrate
 #################################################
-Migrate_migrate_all() {
+Migrate_migrate() {
+    # Get maximum number of migrations
+    local max_migrations="-1"
+    if [[ -n $1 ]]; then
+        max_migrations="$1"
+    fi
+
     # Loading all migrations
     local result=""
     result="$(Sql__execute "$(Migrate_select_all_migrations_asc_query)")"
@@ -172,8 +198,15 @@ Migrate_migrate_all() {
     fi
 
     # Go through all migrations and run them
+    local count=0
     while read -r record; do
         while IFS=$'\t' read id name active created_at; do
+            # If we have run all our count will allow, exit
+            if [[ "$max_migrations" -ne "-1" ]] && [[ "$count" -ge "$max_migrations" ]]; then
+                return $Ash__TRUE
+            fi
+
+            # Migrate
             if [[ "$active" = $Sql__FALSE ]]; then
                 local result=""
                 result="$(Migrate_run_migration "$id" "$name" "$created_at")"
@@ -182,6 +215,7 @@ Migrate_migrate_all() {
                     Logger__error "$result"
                     return $Ash__FALSE
                 else
+                    count=$((count+1))
                     Logger__success "Migrated $name"
                 fi
             fi

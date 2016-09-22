@@ -4,18 +4,32 @@ USAGE:
     migrate:main
         Executes the set of migrations that have yet to be run.
 
-        Example Usage: `ash migrate`
-
     migrate:make $migration_name
         Creates a new migration.
 
-    migrate:sync
+        The `$migration_name` param defines the name of the migration.
+        This should be descriptive of what the migration intends to
+        accomplish.
 
     migrate:rollback
+        Rolls back all of the migrations that have been run in the
+        database.
 
     migrate:refresh
+        Rolls back all of the migrations that have been run in the
+        database, then runs all of the migrations in the database.
 
-    migrate:map $increment
+        The same end result would occur if you run this command vs
+        running `rollback` followed by a `migrate`.
 
-    migrate:step
+    migrate:map
+        Displays the current state of the migrations.
 
+    migrate:step $increment
+        Allows the user to step through their migrations.
+
+        The `$increment` param defines the number and direction
+        of steps.  To migrate, this parameter should be +X, where
+        X is the number of migrations to run.  To revert, this
+        parameter should be -Y, where Y is the number of migrations
+        to revert.
