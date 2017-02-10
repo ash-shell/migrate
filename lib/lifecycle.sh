@@ -29,6 +29,7 @@ Migrate_setup(){
     fi
 
     # Import Queries
+    source "$Migrate_PACKAGE_LOCATION/lib/queries/sql.sh"
     source "$Migrate_PACKAGE_LOCATION/lib/queries/$MIGRATE_DATABASE_DRIVER.sh"
 
     # Verify Connection
