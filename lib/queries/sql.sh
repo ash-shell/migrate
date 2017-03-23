@@ -7,7 +7,7 @@
 Migrate_create_migration_query(){
     read -d '' sql <<____EOF
     INSERT INTO $MIGRATE_MIGRATIONS_TABLE
-    VALUES(DEFAULT, '$1', $Sql__FALSE, $2);
+    VALUES(DEFAULT, '$1', '$Sql__FALSE', $2);
 ____EOF
     echo "$sql"
 }
